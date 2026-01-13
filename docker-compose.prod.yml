@@ -1,0 +1,174 @@
+version: "3.9"
+
+services:
+  # Database Services (Internal Only - No Ports Exposed)
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: authdb
+    volumes:
+      - ./backend/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 10
+    networks:
+      - earnings-app-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+    networks:
+      - earnings-app-network
+    restart: unless-stopped
+
+  # Backend Services (Internal Only - No Ports Exposed)
+  auth-service:
+    build:
+      context: ./backend/authservice2
+      dockerfile: Dockerfile
+      target: runner
+    container_name: auth-service
+    env_file:
+      - .env.production
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/authdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-key-change-this-in-production}
+      - JWT_EXPIRATION=15m
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-https://yourdomain.com/api/auth/oauth/google/callback}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - EMAIL_FROM=${EMAIL_FROM:-onboarding@resend.dev}
+      - PORT=3001
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/proto:/usr/src/app/proto
+    networks:
+      - earnings-app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/auth/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  adminservice:
+    build:
+      context: ./backend/adminservice
+      dockerfile: Dockerfile
+      target: runner
+    container_name: adminservice
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/admindb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key-change-this-in-production
+      - JWT_EXPIRATION=30m
+      - REFRESH_TOKEN_SECRET=your_refresh_secret_key
+      - REFRESH_TOKEN_EXPIRATION=7d
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    volumes:
+      - ./backend/proto:/usr/src/app/proto
+    networks:
+      - earnings-app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/api/admin/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    environment:
+      - PORT=3000
+      - AUTHSERVICE_HOST=auth-service
+      - AUTHSERVICE_PORT=3001
+      - ADMINSERVICE_HOST=adminservice
+      - ADMINSERVICE_PORT=3002
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      adminservice:
+        condition: service_healthy
+    volumes:
+      - ./backend/proto:/usr/src/app/proto
+    networks:
+      - earnings-app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (Internal Only - No Ports Exposed)
+  frontend:
+    build:
+      context: ./frontend/earnings-calendar
+      dockerfile: Dockerfile
+    container_name: frontend
+    environment:
+      - VITE_API_URL=/api
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - earnings-app-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (ONLY Service with Exposed Ports)
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - gateway
+    networks:
+      - earnings-app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  earnings-app-network:
+    driver: bridge
+

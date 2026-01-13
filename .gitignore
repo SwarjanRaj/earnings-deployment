@@ -1,0 +1,26 @@
+# Environment files (contains secrets)
+.env
+.env.production
+.env.local
+*.env
+
+# Node modules (created by Docker)
+node_modules/
+*/node_modules/
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
