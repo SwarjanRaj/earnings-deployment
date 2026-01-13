@@ -1,34 +1,48 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
+// prisma/schema.prisma
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String?
-  firstName String?
-  lastName  String?
-  avatar    String?
-  role      UserRole @default(USER)
-  provider  String?  @default("local")
-  providerId String? @unique
-  isVerified Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("users")
+generator client {
+  provider = "prisma-client-js"
 }
+
+/* ────────────────  TABLES  ──────────────── */
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  username     String         @unique
+  dob          DateTime?
+  passwordHash String?
+  role         UserRole       @default(USER)
+  isVerified   Boolean        @default(false)
+  firstName    String?        // nullable first name
+  lastName     String?        // nullable last name
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id         String    @id                 // this UUID **is** the cookie value
+  tokenHash  String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  expiresAt  DateTime
+  revoked    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/* ────────────────  ENUMS  ──────────────── */
 
 enum UserRole {
   USER
   ADMIN
-  SUPER_ADMIN
+  SUPERADMIN
 }
