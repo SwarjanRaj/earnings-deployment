@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package auth;
+
+// Auth Service
+service AuthService {
+  rpc Signup(SignupRequest) returns (SignupResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Refresh(RefreshRequest) returns (RefreshResponse);
+  rpc Verify(VerifyRequest) returns (VerifyResponse);
+  rpc Forgot(ForgotRequest) returns (ForgotResponse);
+  rpc Reset(ResetRequest) returns (ResetResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+// Request/Response messages
+message SignupRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message SignupResponse {
+  string message = 1;
+  string devCode = 2;
+  bool success = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string message = 1;
+  string accessToken = 2;
+  string refreshId = 3;
+  string refreshExpires = 4;
+  string csrf = 5;
+  User user = 6;
+  bool success = 7;
+}
+
+message RefreshRequest {
+  string refreshToken = 1;
+}
+
+message RefreshResponse {
+  string accessToken = 1;
+  string refreshId = 2;
+  string refreshExpires = 3;
+  string csrf = 4;
+  bool success = 5;
+}
+
+message VerifyRequest {
+  string email = 1;
+  string code = 2;
+}
+
+message VerifyResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message ForgotRequest {
+  string email = 1;
+}
+
+message ForgotResponse {
+  string message = 1;
+  string devCode = 2;
+  bool success = 3;
+}
+
+message ResetRequest {
+  string token = 1;
+  string password = 2;
+}
+
+message ResetResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message GetUserRequest {
+  string userId = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+  bool success = 2;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string role = 4;
+  bool isVerified = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+} 
