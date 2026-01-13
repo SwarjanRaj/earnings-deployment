@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+      "outDir": "./dist",
+      "rootDir": "./src",
+      "baseUrl": "./src",
+      "types": ["node", "jest"],
+      "resolveJsonModule": true,
+      "module": "CommonJS",
+      "target": "ES2017",
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
+    },
+    "include": ["src/**/*.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
+    "exclude": ["node_modules", "dist"]
+  }
+  

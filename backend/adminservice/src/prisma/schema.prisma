@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FinancialRecord {
+  id            String    @id @default(uuid())
+  ticker        String
+  companyName   String?
+  sector        String?
+  marketCap     String?
+  revenue       String?
+  eps           String?
+  earningsDate  DateTime?
+  fiscalYear    Int
+  fiscalQuarter String
+  reportTime    String?
+  peRatio       String?
+
+  @@unique([ticker, fiscalYear, fiscalQuarter])
+}
+
+model LoginActivity {
+  id        String   @id
+  userId    String   @unique
+  lastLogin DateTime
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id
+  email     String
+  code      String
+  expiresAt DateTime
+}
+
+model User {
+  id            String         @id
+  email         String         @unique
+  password      String
+  username      String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now())
+  role          Role           @default(USER) // ✅ Ensures Role enum is used
+  dob           DateTime?
+  LoginActivity LoginActivity?
+}
+
+
+enum Role {
+  USER
+  ADMIN
+  BLOCKED
+  SUPER_ADMIN
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  entity     String
+  entityId   String?
+  timestamp  DateTime @default(now())
+  details    String?
+  userId     String?
+}

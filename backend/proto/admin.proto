@@ -1,0 +1,372 @@
+syntax = "proto3";
+
+package admin;
+
+// Admin Service
+service AdminService {
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+  rpc PromoteUser(PromoteUserRequest) returns (PromoteUserResponse);
+  rpc DemoteUser(DemoteUserRequest) returns (DemoteUserResponse);
+  rpc SetUserRole(SetUserRoleRequest) returns (SetUserRoleResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc BlockUser(BlockUserRequest) returns (BlockUserResponse);
+  rpc UnblockUser(UnblockUserRequest) returns (UnblockUserResponse);
+  rpc BulkDeleteUsers(BulkDeleteUsersRequest) returns (BulkDeleteUsersResponse);
+  rpc GetLoginActivity(GetLoginActivityRequest) returns (GetLoginActivityResponse);
+  
+  // Stock operations
+  rpc GetStocks(GetStocksRequest) returns (GetStocksResponse);
+  rpc GetStockById(GetStockByIdRequest) returns (GetStockByIdResponse);
+  rpc AddStock(AddStockRequest) returns (AddStockResponse);
+  rpc UpdateStock(UpdateStockRequest) returns (UpdateStockResponse);
+  rpc DeleteStock(DeleteStockRequest) returns (DeleteStockResponse);
+  rpc DeleteAllStocks(DeleteAllStocksRequest) returns (DeleteAllStocksResponse);
+  rpc BulkUploadStocks(BulkUploadStocksRequest) returns (BulkUploadStocksResponse);
+  rpc SearchStocks(SearchStocksRequest) returns (SearchStocksResponse);
+  rpc GetStocksByDateRange(GetStocksByDateRangeRequest) returns (GetStocksByDateRangeResponse);
+  rpc GetStocksBySpecificDate(GetStocksBySpecificDateRequest) returns (GetStocksBySpecificDateResponse);
+  rpc GetStocksByMonth(GetStocksByMonthRequest) returns (GetStocksByMonthResponse);
+  rpc GetStocksByQuarter(GetStocksByQuarterRequest) returns (GetStocksByQuarterResponse);
+  rpc GetTodayStocks(GetTodayStocksRequest) returns (GetTodayStocksResponse);
+  rpc GetYesterdayStocks(GetYesterdayStocksRequest) returns (GetYesterdayStocksResponse);
+  rpc GetTomorrowStocks(GetTomorrowStocksRequest) returns (GetTomorrowStocksResponse);
+  rpc GetThisWeekStocks(GetThisWeekStocksRequest) returns (GetThisWeekStocksResponse);
+  rpc GetNextWeekStocks(GetNextWeekStocksRequest) returns (GetNextWeekStocksResponse);
+  rpc GetPublicPreviewStocks(GetPublicPreviewStocksRequest) returns (GetPublicPreviewStocksResponse);
+}
+
+// User management messages
+message GetUsersRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+}
+
+message GetUsersResponse {
+  repeated User users = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message PromoteUserRequest {
+  string email = 1;
+}
+
+message PromoteUserResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message DemoteUserRequest {
+  string email = 1;
+}
+
+message DemoteUserResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message SetUserRoleRequest {
+  string email = 1;
+  string role = 2;
+}
+
+message SetUserRoleResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message DeleteUserRequest {
+  string userId = 1;
+}
+
+message DeleteUserResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message BlockUserRequest {
+  string userId = 1;
+}
+
+message BlockUserResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message UnblockUserRequest {
+  string userId = 1;
+}
+
+message UnblockUserResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message BulkDeleteUsersRequest {
+  repeated string ids = 1;
+}
+
+message BulkDeleteUsersResponse {
+  string message = 1;
+  int32 deletedCount = 2;
+  bool success = 3;
+}
+
+message GetLoginActivityRequest {
+  string email = 1;
+}
+
+message GetLoginActivityResponse {
+  repeated LoginActivity activities = 1;
+  bool success = 2;
+}
+
+// Stock management messages
+message GetStocksRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string search = 3;
+  string sortBy = 4;
+  string sortOrder = 5;
+}
+
+message GetStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetStockByIdRequest {
+  string id = 1;
+}
+
+message GetStockByIdResponse {
+  Stock stock = 1;
+  bool success = 2;
+}
+
+message AddStockRequest {
+  Stock stock = 1;
+}
+
+message AddStockResponse {
+  Stock stock = 1;
+  bool success = 2;
+}
+
+message UpdateStockRequest {
+  string id = 1;
+  Stock stock = 2;
+}
+
+message UpdateStockResponse {
+  Stock stock = 1;
+  bool success = 2;
+}
+
+message DeleteStockRequest {
+  string id = 1;
+}
+
+message DeleteStockResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message DeleteAllStocksRequest {
+  // Empty request
+}
+
+message DeleteAllStocksResponse {
+  string message = 1;
+  int32 deletedCount = 2;
+  bool success = 3;
+}
+
+message BulkUploadStocksRequest {
+  repeated Stock stocks = 1;
+}
+
+message BulkUploadStocksResponse {
+  string message = 1;
+  int32 count = 2;
+  bool success = 3;
+}
+
+message SearchStocksRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message SearchStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetStocksByDateRangeRequest {
+  string startDate = 1;
+  string endDate = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetStocksByDateRangeResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetStocksBySpecificDateRequest {
+  string date = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetStocksBySpecificDateResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetStocksByMonthRequest {
+  int32 year = 1;
+  int32 month = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetStocksByMonthResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetStocksByQuarterRequest {
+  int32 year = 1;
+  int32 quarter = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetStocksByQuarterResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetTodayStocksRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetTodayStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetYesterdayStocksRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetYesterdayStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetTomorrowStocksRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetTomorrowStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetThisWeekStocksRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetThisWeekStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetNextWeekStocksRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetNextWeekStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+message GetPublicPreviewStocksRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetPublicPreviewStocksResponse {
+  repeated Stock stocks = 1;
+  PaginationInfo pagination = 2;
+  bool success = 3;
+}
+
+// Common message types
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string role = 4;
+  bool isVerified = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message Stock {
+  string id = 1;
+  string ticker = 2;
+  string companyName = 3;
+  string sector = 4;
+  string marketCap = 5;
+  string revenue = 6;
+  string eps = 7;
+  string earningsDate = 8;
+  int32 fiscalYear = 9;
+  string fiscalQuarter = 10;
+  string reportTime = 11;
+  string peRatio = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+message LoginActivity {
+  string id = 1;
+  string email = 2;
+  string ipAddress = 3;
+  string userAgent = 4;
+  string loginTime = 5;
+  bool success = 6;
+}
+
+message PaginationInfo {
+  int32 currentPage = 1;
+  int32 pageSize = 2;
+  int32 total = 3;
+  int32 totalPages = 4;
+  bool hasNextPage = 5;
+  bool hasPrevPage = 6;
+  int32 startIndex = 7;
+  int32 endIndex = 8;
+} 

@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: authdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 10
+    networks:
+      - backend-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+    networks:
+      - backend-network
+
+  auth-service:
+    build:
+      context: ./authservice2
+      dockerfile: Dockerfile
+      target: runner
+    container_name: auth-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/authdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key-change-this-in-production
+      - JWT_EXPIRATION=15m
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=http://localhost:3001/api/auth/oauth/google/callback
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - EMAIL_FROM=onboarding@resend.dev
+      - PORT=3001
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks:
+      - backend-network
+
+  adminservice:
+    build:
+      context: ./adminservice
+      dockerfile: Dockerfile
+      target: runner
+    container_name: adminservice
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/admindb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key-change-this-in-production
+      - JWT_EXPIRATION=30m
+      - REFRESH_TOKEN_SECRET=your_refresh_secret_key
+      - REFRESH_TOKEN_EXPIRATION=7d
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    ports:
+      - "3002:3002"
+    networks:
+      - backend-network
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    environment:
+      - PORT=3000
+      - AUTHSERVICE_HOST=auth-service
+      - AUTHSERVICE_PORT=3001
+      - ADMINSERVICE_HOST=adminservice
+      - ADMINSERVICE_PORT=3002
+    depends_on:
+      - auth-service
+      - adminservice
+    ports:
+      - "3000:3000"
+    networks:
+      - backend-network
+
+
+networks:
+  backend-network:
+    name: earnings-app-network

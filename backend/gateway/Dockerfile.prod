@@ -1,0 +1,60 @@
+# Multi-stage build for Gateway (Production)
+FROM node:18-alpine AS deps
+WORKDIR /usr/src/app
+
+# Install dependencies
+COPY backend/gateway/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Build stage
+FROM node:18-alpine AS builder
+WORKDIR /usr/src/app
+
+# Install all dependencies (including dev)
+COPY backend/gateway/package*.json ./
+RUN npm ci
+
+# Copy source code
+COPY backend/gateway/tsconfig*.json ./
+COPY backend/gateway/nest-cli.json ./
+COPY backend/gateway/src ./src
+
+# Build application
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine AS runner
+WORKDIR /usr/src/app
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    wget \
+    dumb-init \
+    && rm -rf /var/cache/apk/*
+
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=512"
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Copy necessary files
+COPY --from=deps --chown=nodejs:nodejs /usr/src/app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /usr/src/app/dist ./dist
+COPY --chown=nodejs:nodejs backend/gateway/package.json ./
+
+# Copy proto files
+COPY --chown=nodejs:nodejs backend/proto ./proto
+
+# Switch to non-root user
+USER nodejs
+
+EXPOSE 3000
+
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/main.js"]
+
+
